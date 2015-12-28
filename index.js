@@ -20,7 +20,7 @@ const csso = require("gulp-csso")
 const persistify = require("persistify")
 const envify = require("envify")
 const babelify = require("babelify")
-const uglify = require("gulp-uglify")
+const uglifyify = require("uglifyify")
 const rev = require("gulp-rev")
 const revReplace = require("gulp-rev-replace")
 const revNapkin = require("gulp-rev-napkin")
@@ -29,6 +29,9 @@ const gzip = require("gulp-gzip")
 const optipng = require("imagemin-optipng")
 const jpegoptim = require("imagemin-jpegoptim")
 const size = require("gulp-size")
+
+const NODE_ENV = _.get(process, "env.NODE_ENV", "development")
+const ASSET_HOST = _.get(process, "env.ASSET_HOST")
 
 exports.cleanAssets = function cleanAssets() {
   return del("public/assets")
@@ -50,7 +53,9 @@ exports.bundleStyles = function bundleStyles(callback) {
         util.log(err.toString())
         stream.emit("end")
       })
-    if (process.env.NODE_ENV === "production") stream.pipe(csso(true))
+    if (NODE_ENV === "production") {
+      stream.pipe(csso(true))
+    }
     return stream.pipe(gulp.dest("public/assets/bundles"))
   })
   if (_.isEmpty(streams)) return callback()
@@ -62,9 +67,14 @@ exports.bundleScripts = function bundleScripts(callback) {
     const extname = path.extname(entry)
     const basename = path.basename(entry, extname)
     if ([".js"].indexOf(extname) < 0) return
-    const bundler = persistify({entries: entry}, {cacheDir: "tmp/persistify"})
+    const bundler = persistify({entries: entry}, {
+      cacheDir: `tmp/persistify/${NODE_ENV}`
+    })
     bundler.transform(envify, {global: true})
     bundler.transform(babelify)
+    if (NODE_ENV === "production") {
+      bundler.transform(uglifyify, {global: true})
+    }
     const stream = bundler.bundle()
       .on("error", (err) => {
         util.log(util.colors.red("Browserify Error"), err.message)
@@ -72,8 +82,8 @@ exports.bundleScripts = function bundleScripts(callback) {
       })
       .pipe(source(basename + extname))
       .pipe(buffer())
-    if (process.env.NODE_ENV === "production") stream.pipe(uglify())
-    return stream.pipe(gulp.dest("public/assets/bundles"))
+      .pipe(gulp.dest("public/assets/bundles"))
+    return stream
   })
   if (_.isEmpty(streams)) return callback()
   return merge(_.compact(streams))
@@ -88,17 +98,17 @@ exports.copyFiles = function copyFiles(callback) {
 }
 
 exports.cdnAssets = function cdnAssets(callback) {
-  if (process.env.NODE_ENV !== "production") return callback()
-  if (process.env.ASSET_HOST == null) return callback()
+  if (NODE_ENV !== "production") return callback()
+  if (ASSET_HOST == null) return callback()
   return gulp.src("public/assets/**/*")
     .pipe(replace(/\/assets\/((\w|\/|\-)*\.(css|js|jpg|jpeg|png|gif|swf))/ig,
-      `${process.env.ASSET_HOST}/assets/$1`, {skipBinary: true})
+      `${ASSET_HOST}/assets/$1`, {skipBinary: true})
     )
     .pipe(gulp.dest("public/assets"))
 }
 
 exports.revAssets = function revAssets(callback) {
-  if (process.env.NODE_ENV !== "production") return callback()
+  if (NODE_ENV !== "production") return callback()
   let stream = gulp.src("public/assets/**/*")
     .pipe(rev())
     .pipe(revReplace())
@@ -110,7 +120,7 @@ exports.revAssets = function revAssets(callback) {
 }
 
 exports.compressAssets = function compressAssets(callback) {
-  if (process.env.NODE_ENV !== "production") return callback()
+  if (NODE_ENV !== "production") return callback()
   let gzipStream = gulp.src("public/assets/**/*.+(html|css|js|txt|md)")
     .pipe(gzip({level: 9}))
     .pipe(gulp.dest("public/assets"))
