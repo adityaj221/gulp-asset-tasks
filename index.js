@@ -29,9 +29,11 @@ const gzip = require("gulp-gzip")
 const optipng = require("imagemin-optipng")
 const jpegoptim = require("imagemin-jpegoptim")
 const size = require("gulp-size")
+const browserSync = require("browser-sync")
 
 const NODE_ENV = _.get(process, "env.NODE_ENV", "development")
 const ASSET_HOST = _.get(process, "env.ASSET_HOST")
+const PORT = _.get(process, "env.PORT", 8080)
 
 exports.cleanAssets = function cleanAssets() {
   return del("public/assets")
@@ -136,9 +138,24 @@ exports.sizeAssets = function sizeAssets() {
     .pipe(size({showFiles: true}))
 }
 
+exports.startBrowserSync = function startBrowserSync(callback) {
+  browserSync({}, callback)
+}
+
+exports.reloadBrowserSync = function reloadBrowserSync(callback) {
+  browserSync.reload()
+  callback()
+}
+
 exports.watchAssets = function watchAssets(callback) {
-  gulp.watch(["assets/styles/**/*"], exports.bundleStyles)
-  gulp.watch(["assets/scripts/**/*"], exports.bundleScripts)
-  gulp.watch(_.keys(config.copies), exports.copyFiles)
+  gulp.watch(["assets/styles/**/*"],
+    gulp.series("bundleStyles", "reloadBrowserSync")
+  )
+  gulp.watch(["assets/scripts/**/*"],
+    gulp.series("bundleScripts", "reloadBrowserSync")
+  )
+  gulp.watch(_.keys(config.copies),
+    gulp.series("copyFiles", "reloadBrowserSync")
+  )
   callback()
 }
