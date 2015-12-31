@@ -35,11 +35,11 @@ const NODE_ENV = _.get(process, "env.NODE_ENV", "development")
 const ASSET_HOST = _.get(process, "env.ASSET_HOST")
 const PORT = _.get(process, "env.PORT", 8080)
 
-exports.cleanAssets = function cleanAssets() {
+function cleanAssets() {
   return del("public/assets")
 }
 
-exports.bundleStyles = function bundleStyles(callback) {
+function bundleStyles(callback) {
   let streams = _.map(config.bundles, (entry) => {
     let extname = path.extname(entry)
     if (extname !== ".css") return
@@ -64,7 +64,7 @@ exports.bundleStyles = function bundleStyles(callback) {
   return merge(_.compact(streams))
 }
 
-exports.bundleScripts = function bundleScripts(callback) {
+function bundleScripts(callback) {
   const streams = _.map(config.bundles, (entry) => {
     const extname = path.extname(entry)
     const basename = path.basename(entry, extname)
@@ -91,7 +91,7 @@ exports.bundleScripts = function bundleScripts(callback) {
   return merge(_.compact(streams))
 }
 
-exports.copyFiles = function copyFiles(callback) {
+function copyFiles(callback) {
   let streams = _.map(config.copies, (dest, src) => {
     return gulp.src(src).pipe(gulp.dest(dest))
   })
@@ -99,7 +99,7 @@ exports.copyFiles = function copyFiles(callback) {
   return merge(streams)
 }
 
-exports.cdnAssets = function cdnAssets(callback) {
+function cdnAssets(callback) {
   if (NODE_ENV !== "production") return callback()
   if (ASSET_HOST == null) return callback()
   return gulp.src("public/assets/**/*")
@@ -109,7 +109,7 @@ exports.cdnAssets = function cdnAssets(callback) {
     .pipe(gulp.dest("public/assets"))
 }
 
-exports.revAssets = function revAssets(callback) {
+function revAssets(callback) {
   if (NODE_ENV !== "production") return callback()
   let stream = gulp.src("public/assets/**/*")
     .pipe(rev())
@@ -121,7 +121,7 @@ exports.revAssets = function revAssets(callback) {
   return stream
 }
 
-exports.compressAssets = function compressAssets(callback) {
+function compressAssets(callback) {
   if (NODE_ENV !== "production") return callback()
   let gzipStream = gulp.src("public/assets/**/*.+(html|css|js|txt|md)")
     .pipe(gzip({level: 9}))
@@ -133,29 +133,39 @@ exports.compressAssets = function compressAssets(callback) {
   return merge(gzipStream, imageStream)
 }
 
-exports.sizeAssets = function sizeAssets() {
+function sizeAssets() {
   return gulp.src("public/assets/**/*")
     .pipe(size({showFiles: true}))
 }
 
-exports.startBrowserSync = function startBrowserSync(callback) {
+function startBrowserSync(callback) {
   browserSync({}, callback)
 }
 
-exports.reloadBrowserSync = function reloadBrowserSync(callback) {
+function reloadBrowserSync(callback) {
   browserSync.reload()
   callback()
 }
 
 exports.watchAssets = function watchAssets(callback) {
   gulp.watch(["assets/styles/**/*"],
-    gulp.series("bundleStyles", "reloadBrowserSync")
+    gulp.series(bundleStyles, reloadBrowserSync)
   )
   gulp.watch(["assets/scripts/**/*"],
-    gulp.series("bundleScripts", "reloadBrowserSync")
+    gulp.series(bundleScripts, reloadBrowserSync)
   )
   gulp.watch(_.keys(config.copies),
-    gulp.series("copyFiles", "reloadBrowserSync")
+    gulp.series(copyFiles, reloadBrowserSync)
   )
   callback()
 }
+
+exports.cleanAssets = cleanAssets
+exports.bundleStyles = bundleStyles
+exports.bundleScripts = bundleScripts
+exports.copyFiles = copyFiles
+exports.cdnAssets = cdnAssets
+exports.revAssets = revAssets
+exports.compressAssets = compressAssets
+exports.sizeAssets = sizeAssets
+exports.startBrowserSync = startBrowserSync
