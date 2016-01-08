@@ -31,7 +31,6 @@
     "persistify": "^1.0.0",
     "postcss-cssnext": "^2.3.0",
     "postcss-import": "^7.1.3",
-    "postcss-nested": "^1.0.0",
     "rucksack-css": "^0.8.5",
     "uglifyify": "^3.0.1",
     "vinyl-buffer": "^1.0.0",

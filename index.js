@@ -13,7 +13,6 @@ const util = require("gulp-util")
 const filter = require("gulp-filter")
 const postcss = require("gulp-postcss")
 const atImport = require("postcss-import")
-const nested = require("postcss-nested")
 const cssnext = require("postcss-cssnext")
 const rucksack = require("rucksack-css")
 const csso = require("gulp-csso")
@@ -45,7 +44,6 @@ function bundleStyles(callback) {
     if (extname !== ".css") return
     const processors = [
       atImport({glob: true}),
-      nested,
       cssnext(),
       rucksack()
     ]
