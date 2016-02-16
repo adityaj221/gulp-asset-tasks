@@ -16,7 +16,7 @@ const atImport = require("postcss-import")
 const cssnext = require("postcss-cssnext")
 const rucksack = require("rucksack-css")
 const csso = require("gulp-csso")
-const persistify = require("persistify")
+const browserifyInc = require("browserify-incremental")
 const envify = require("envify")
 const babelify = require("babelify")
 const uglifyify = require("uglifyify")
@@ -67,8 +67,9 @@ function bundleScripts(callback) {
     const extname = path.extname(entry)
     const basename = path.basename(entry, extname)
     if ([".js"].indexOf(extname) < 0) return
-    const bundler = persistify({entries: entry}, {
-      cacheDir: `tmp/persistify/${NODE_ENV}`
+    const bundler = browserifyInc({
+      entries: entry,
+      cacheFile: "./tmp/browserify_cache.json"
     })
     bundler.transform(envify, {global: true})
     bundler.transform(babelify)
