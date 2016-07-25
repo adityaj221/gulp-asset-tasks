@@ -29,6 +29,7 @@ const optipng = require("imagemin-optipng")
 const jpegoptim = require("imagemin-jpegoptim")
 const size = require("gulp-size")
 const browserSync = require("browser-sync")
+const watchify = require('watchify');
 
 const NODE_ENV = _.get(process, "env.NODE_ENV", "development")
 const ASSET_HOST = _.get(process, "env.ASSET_HOST")
@@ -62,7 +63,7 @@ function bundleStyles(callback) {
   return merge(_.compact(streams))
 }
 
-function bundleScripts(callback) {
+function bundleScripts(callback,watch) {
   const streams = _.map(config.bundles, (entry) => {
     const extname = path.extname(entry)
     const basename = path.basename(entry, extname)
@@ -71,6 +72,7 @@ function bundleScripts(callback) {
       entries: entry,
       cacheFile: "./tmp/browserify_cache.json"
     })
+    if(watch) watchify(bundler)
     bundler.transform(envify, {global: true})
     bundler.transform(babelify)
     if (NODE_ENV === "production") {
@@ -151,7 +153,7 @@ exports.watchAssets = function watchAssets(callback) {
     gulp.series(bundleStyles, reloadBrowserSync)
   )
   gulp.watch(["assets/scripts/**/*"],
-    gulp.series(bundleScripts, reloadBrowserSync)
+    gulp.series(bundleScripts(true), reloadBrowserSync)
   )
   gulp.watch(_.keys(config.copies),
     gulp.series(copyFiles, reloadBrowserSync)
