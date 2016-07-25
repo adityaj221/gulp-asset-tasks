@@ -104,7 +104,7 @@ function cdnAssets(callback) {
   if (NODE_ENV !== "production") return callback()
   if (ASSET_HOST == null) return callback()
   return gulp.src("public/assets/**/*")
-    .pipe(replace(/\/assets\/((\w|\/|\-)*\.(css|js|jpg|jpeg|png|gif|swf|html))/ig,
+    .pipe(replace(/\/assets\/((\w|\/|\-)*\.(css|js|jpg|jpeg|png|gif|swf))/ig,
       `${ASSET_HOST}/assets/$1`, {skipBinary: true})
     )
     .pipe(gulp.dest("public/assets"))
@@ -112,7 +112,7 @@ function cdnAssets(callback) {
 
 function revAssets(callback) {
   if (NODE_ENV !== "production") return callback()
-  let stream = gulp.src(["public/assets/**/*", "!public/assets/"])
+  let stream = gulp.src("public/assets/**/*")
     .pipe(rev())
     .pipe(revReplace())
     .pipe(gulp.dest("public/assets"))
