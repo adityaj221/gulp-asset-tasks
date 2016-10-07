@@ -29,7 +29,7 @@ const optipng = require("imagemin-optipng")
 const jpegoptim = require("imagemin-jpegoptim")
 const size = require("gulp-size")
 const browserSync = require("browser-sync")
-const watchify = require('watchify');
+const minifyify = require('minifyify')
 
 const NODE_ENV = _.get(process, "env.NODE_ENV", "development")
 const ASSET_HOST = _.get(process, "env.ASSET_HOST")
@@ -63,20 +63,21 @@ function bundleStyles(callback) {
   return merge(_.compact(streams))
 }
 
-function bundleScripts(callback,watch) {
+function bundleScripts(callback) {
   const streams = _.map(config.bundles, (entry) => {
     const extname = path.extname(entry)
     const basename = path.basename(entry, extname)
     if ([".js"].indexOf(extname) < 0) return
     const bundler = browserifyInc({
       entries: entry,
-      cacheFile: "./tmp/browserify_cache.json"
+      cacheFile: "./tmp/browserify_cache.json",
+      debug: true
     })
-    if(watch) watchify(bundler)
     bundler.transform(envify, {global: true})
     bundler.transform(babelify)
     if (NODE_ENV === "production") {
       bundler.transform(uglifyify, {global: true})
+      bundler.plugin('minifyify', {map: 'map.json', output: __dirname + '/map.json'})
     }
     const stream = bundler.bundle()
       .on("error", (err) => {
@@ -153,7 +154,7 @@ exports.watchAssets = function watchAssets(callback) {
     gulp.series(bundleStyles, reloadBrowserSync)
   )
   gulp.watch(["assets/scripts/**/*"],
-    gulp.series(bundleScripts(true), reloadBrowserSync)
+    gulp.series(bundleScripts, reloadBrowserSync)
   )
   gulp.watch(_.keys(config.copies),
     gulp.series(copyFiles, reloadBrowserSync)
