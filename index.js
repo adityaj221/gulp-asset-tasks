@@ -77,7 +77,7 @@ function bundleScripts(callback) {
     bundler.transform(babelify)
     if (NODE_ENV === "production") {
       bundler.transform(uglifyify, {global: true})
-      bundler.plugin('minifyify', {map: 'map.json', output: __dirname + '/map.json'})
+      bundler.plugin('minifyify', {map: 'map.json', output: 'public/assets/bundles/map.json'})
     }
     const stream = bundler.bundle()
       .on("error", (err) => {
